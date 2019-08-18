@@ -1,0 +1,8 @@
+# requirment package (test on U-buntu 13.04)
+sudo apt-get install gcc-arm-linux-gnueabi
+
+#compiling
+sudo make CROSS_COMPILE=arm-linux-gnueabi- clean
+sudo make CROSS_COMPILE=arm-linux-gnueabi- nsa310_config
+sudo make CROSS_COMPILE=arm-linux-gnueabi- nsa310
+sudo tools/mkimage -n board/ZyXEL/nsa310/kwbimage.cfg -T kwbimage -a 0x00600000 -e 0x00600000 -d u-boot.bin u-bootnsa310src.kwb

@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>Update uBoot Zyxel NSA310</title>
+  </head>
+  <style type="text/css">
+.code
+{
+  -moz-border-radius:6px 6px 6px 6px;
+  background-color:#F2F2F2;
+  border:1px solid black;
+  margin:1em;
+  padding:14px 20px;
+  white-space:pre;
+}
+.warn
+{
+  color: red;
+}
+</style>
+  <body>
+<h2>Instalacja nowej wersji u-Boot nsa310v1 - build based from source <a href="http://git.denx.de/?p=u-boot.git;a=commit;h=62c175fbb8a0f9a926c88294ea9f7e88eb898f6c"> DENX - tag 2013.07</a> </h2> 
+
+<p>Istnieje możliwoć uruchomienie u-boota z wykorzystaniem kabla szeregowego, przed wgraniem do NANDa:<br>
+<a href="https://dl.dropboxusercontent.com/u/86027317/u-Boot/InstallUbootNsa310_UART.html">InstallUbootNsa310_UART.html</a></p>
+
+<p> <font color=red> Ostrzeżenie: Flashując mtd0 ryzykujesz uszkodzenie urządzenia oraz tracisz gwarancję producenta.
+Nie biorę żadnej odpowiedzialności za to, co się stanie z NASem po wgraniu tego oprogramowania.</font> <br>
+W przypadku niepowodzenia (wyłaczenia prądu itp), posiadając kabalek serial można uruchomić NASa poprzez wczytanie uboota z wykorzystaniem programu kwboot
+</p>
+
+
+
+<h4>Zmiany w stosunku do wersji oryginalnej</h4>
+<ul>
+  <li>Bazuje na wersji 201307</li>
+  <li>Obsługa Kernel FDT </li>
+  <li>Obsługa dyżych dysków - większych niż 2TB</li>
+  <li>Obsługa partycji EFI </li>
+  <li>Obsługa systemów plików EXT4,EXT2,EXT3,FAT,JFFS2 </li>
+  <li>Wsparcie dla bootowania USB z wykorzystaniem huba - nie trzeba wyjmować innych urządzeń</li>
+  <li>Environment taki sam jak dotychczas </li>
+</ul>
+Uboot nie działa ze stockowym oprogramowaniem!!! - wpierw nalezy przywrócić poprzednią wersję uBoota (patrz niżej)
+
+<h4>MD5 dla plików </h4>
+<ul>
+<li>uImageMTD - md5: 42129256ae9cacbd74687dc21b6f56cc</li>
+<li>u-boot_nsa310_NANDv1.kwb - md5: 904412ff3d9283ab9e3d4716f4f4c99e</li>                                 
+<li>u-boot_nsa310_NAND_oryg.kwb - md5: ffdc2c6529e7e53c8c2479aa9b224b91</li>
+</ul>
+
+<h2> Instalacja z poziomu Linuxa </h2>
+
+<p>Wymagany jest Kernel z możliwością zmiany w nandzie (udostępniam Kernel na zrodlach 3.6.9 z odczytem Ext2,3,4 oraz FAT ze zmodyfikowanym patchem od Petera na zapis w mtd0 -> usunięty wiersz .mask_flags = MTD_WRITEABLE) <br>
+Uwaga: w poniższych przykładach Kernel ma nazwę uImage i znajduje się w /boot -jak masz inaczej skonfigurowane środowisko musisz dostosować poniższe polecenia</p>
+
+<h4>Krok 1: sprawdzenie poprawności Environment </h4>
+
+<p>Po połączeniu z NASem przez SSH, uruchom poniższe polecenia: (tam to sa dwa znaki apostrof a nie jeden cudzysłów!!</p>
+<div class="code">apt-get install u-boot-tools
+fw_printenv ''
+</div>
+<p>W przypadku gdy wynikiem jest: Error: "" ,wszytsko jest ok (nie istnieje ciag atrybutow bez klucza).<br>
+Natomiast gdy zwracany jest jaka zawartoć, należy ją skasować poleceniem:  fw_setenv '' <br>
+Bez poprawnego Environment nie wczytają sie istniejące ustawienia przy bootowaniu i nie obejdzie sie bez kabelka serial.</p>
+
+<h4>Krok 2: uruchomienie NASa z Kernelem obslugującym zapis w mtd0 </h4>
+
+<p>Jak ktoś instalował zgodnie z poradnikiem od Osy z http://openrouter.info to musi wczeniej wykonać polecenie:  mount /dev/sda1 /boot -o rw,remount</p>
+<div class="code">cd /home
+wget https://dl.dropboxusercontent.com/u/86027317/u-Boot/uImageMTD --no-check-certificate
+cp /boot/uImage /boot/uImage.bck
+cp /home/uImageMTD /boot/uImage
+shutdown -r now
+</div>
+<p>Po restarcie upewniamy się czy uruchomieny jest wlasciwy Kernel poleceniem: uname -r <br>
+Wynikiem powinno być: 3.6.9
+</p>
+
+
+<h4>Krok 3: nadpisanie uBoota w mtd0 </h4>
+<div class="code">cd /home
+apt-get install mtd-utils
+wget https://dl.dropboxusercontent.com/u/86027317/u-Boot/u-boot_nsa310_NANDv1.kwb --no-check-certificate
+flash_erase /dev/mtd0 0 4
+nandwrite -p /dev/mtd0 /home/u-boot_nsa310_NANDv1.kwb
+shutdown -r now
+</div>
+<p>Dla osób posiadających kabelek serial - u-Boot wyświetla podczas uruchomienia:</p>
+<div class="code">U-Boot 2013.07 (Sep 20 2013 - 15:45:03)
+ZyXEL NSA310 1-Bay Power Media Server
+
+SoC:   Kirkwood 88F6281_A1
+DRAM:  256 MiB
+WARNING: Caches not enabled
+NAND:  128 MiB
+In:    serial
+Out:   serial
+Err:   serial
+Net:   egiga0
+PHY reset timed out
+MV88E1318 PHY initialized on egiga0 </div>
+
+<h4>Krok 4: przywrócenie wersji Kernela używanej dotychczas </h4>
+<p>wersja 3.6.9 może nie zawierać wszystkich driverów,ustawień itp używanych dotychczas </p>
+<div class="code">cp /boot/uImage.bck /boot/uImage
+shutdown -r now
+</div>
+
+
+<h2>Instalacja z poziomu uBoota </h2>
+<p>Posiadacze kabelka serial, mogą zainstalować nową wersję z poziomu uBoota: przerywamy bootloader i wpisujemy</p>
+<div class="code">ide reset;ext2load ide 0:2 0x800000  /home/u-boot_nsa310_NANDv1.kwb
+nand erase 0x0 0x80000
+nand write.e 0x800000 0x0 0x80000
+reset </div>
+
+<h2>Przywrócenie oryginalnego uBoota z poziomu Linuxa </h2>
+<p>Wykonujemy wszystkie kroki po kolei Krok 3 zastępujemy poniższym:</p>
+<div class="code">cd /home
+apt-get install mtd-utils
+wget https://dl.dropboxusercontent.com/u/86027317/u-Boot/u-boot_nsa310_NAND_oryg.kwb --no-check-certificate
+flash_erase /dev/mtd0 0 4
+nandwrite -p /dev/mtd0 /home/u-boot_nsa310_NAND_oryg.kw
+shutdown -r now
+</div>
+
+
+<p>Created by Rafal</p>
+    
+  </body>
+</html>

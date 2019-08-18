@@ -1,0 +1,57 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>Boot Zyxel NSA310 from u-boot UART</title>
+  </head>
+  <style type="text/css">
+.code
+{
+  -moz-border-radius:6px 6px 6px 6px;
+  background-color:#F2F2F2;
+  border:1px solid black;
+  margin:1em;
+  padding:14px 20px;
+  white-space:pre;
+}
+.warn
+{
+  color: red;
+}
+</style>
+  <body>
+<h2>Uruchomienie nowej wersji u-Boot nsa310v1 z wykorzystaniem kabelka szeregowego.</a> </h2> 
+<p> <font color=red> Ostrzeżenie: Nie biorę żadnej odpowiedzialności za to, co się stanie z NASem po uruchomieniu tego oprogramowania.</font> <br>
+</p>
+
+<p>Opis co zawiera ta wersja u-Boota oraz jak wgrać do NANDa:<a href="https://dl.dropboxusercontent.com/u/86027317/u-Boot/InstallUbootNsa310.html"> InstallUbootNsa310.html</a></p> 
+
+<h4>MD5 dla plików </h4>
+<ul>
+<li>kwboot.tar.gz - md5: 4b227fdabab34d3284fc6f89abeb7117</li>
+<li>u-boot_nsa310_NANDv1.kwb - md5: 904412ff3d9283ab9e3d4716f4f4c99e</li>                                 
+</ul>
+
+<h2>Uruchomienie przez UART</h2>
+<p>NAS310 MUSI być wyłączony oraz podłączony z komputerem kabelkiem szeregowym.</p>
+
+<h4>Krok 1: Na komputerze z komputera z ktorego bedziemy bootować Nsa310 </h4>
+<div class="code">cd /tmp
+wget https://dl.dropboxusercontent.com/u/86027317/u-Boot/kwboot.tar.gz --no-check-certificate
+tar -zxvf kwboot.tar.gz
+cd /kwboot
+make
+wget https://dl.dropboxusercontent.com/u/86027317/u-Boot/u-boot_nsa310_NANDv1.kwb --no-check-certificate
+sudo ./kwboot -t -p -B 115200 /dev/ttyUSB0 -b u-boot_nsa310_NANDv1.kwb
+</div>
+
+<h4>Krok 2: włączenie NASa</h4>
+<p>Powinien zacząć się łądować u-boot przez port szeregowy i po zakończeniu przesyłania wystartować. <br>
+Gdyby Environment nie chciał się wczytać należy wykonać Krok1 z pliku <a href="https://dl.dropboxusercontent.com/u/86027317/u-Boot/InstallUbootNsa310.html"> InstallUbootNsa310.html</a>
+</p>
+
+<p>Created by Rafal</p>
+    
+  </body>
+</html>
